@@ -6,7 +6,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { ShoppingCart, Star, ArrowRight, ChevronLeft, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { useGetProductByIdQuery, useGetProductsQuery } from '@/store/api/productApiSlice';
+import { useGetProductByIdQuery } from '@/store/api/productApiSlice';
 import { useAddToCartMutation } from '@/store/api/cartApiSlice';
 import { toast } from 'react-toastify';
 import Image from 'next/image';
@@ -17,51 +17,39 @@ export default function ProductPage() {
   const router = useRouter();
   const productId = params.id as string;
 
-  // Try fetching single product first
-  const { data: singleProductRes, isLoading: isLoadingSingle, error: singleError } = useGetProductByIdQuery(productId);
-  
-  // Also fetch list as a fallback in case getProductById is not supported
-  const { data: allProductsRes, isLoading: isLoadingAll } = useGetProductsQuery({ limit: 100 }, {
-    skip: !!singleProductRes?.data || !!singleProductRes?._id
+  const { data: singleProductRes, isLoading: isLoadingSingle, isFetching: isFetchingSingle } = useGetProductByIdQuery(productId, {
+    skip: !productId,
+    refetchOnFocus: false,
+    refetchOnReconnect: true,
   });
-
-  const product = singleProductRes?.data || 
-                  (singleProductRes?._id ? singleProductRes : null) || 
-                  allProductsRes?.data?.products?.find((p: any) => p._id === productId);
-
-  const isLoading = isLoadingSingle && (product ? false : isLoadingAll);
+  const product = singleProductRes?.data || (singleProductRes?._id ? singleProductRes : null);
+  const isLoading = (!product && isLoadingSingle) || (!product && isFetchingSingle);
 
   const [addToCart, { isLoading: isAddingToCart }] = useAddToCartMutation();
 
-  const handleAddToCart = async () => {
-    try {
-      const response = await addToCart({ productId, quantity: 1 }).unwrap();
-      if (response?.success) {
-        toast.success(`تم إضافة ${product?.name} إلى السلة بنجاح ✨`);
-      }
-    } catch (err: any) {
-      console.error(err);
-      if (err?.data?.message?.includes('already') || err?.status === 400) {
-        toast.info('هذا المنتج موجود بالفعل في سلتك 😊');
-      } else {
+  const handleAddToCart = () => {
+    // Trigger in background and keep UI responsive immediately.
+    addToCart({ productId, quantity: 1, product })
+      .unwrap()
+      .catch((err: any) => {
+        if (err?.data?.message?.includes('already') || err?.status === 400) {
+          toast.info('هذا المنتج موجود بالفعل في سلتك 😊');
+          return;
+        }
         toast.error('عذراً، حدث خطأ أثناء الإضافة. يرجى المحاولة مرة أخرى.');
-      }
-    }
+      });
+    toast.success(`تم إضافة ${product?.name} إلى السلة بنجاح ✨`);
   };
 
-  const handleBuyNow = async () => {
-    try {
-      // نتحقق أولاً إذا كان المنتج موجود بالفعل في السلة
-      await addToCart({ productId, quantity: 1 }).unwrap();
-      router.push('/checkout');
-    } catch (err: any) {
-      // إذا كان موجود بالفعل، ننتقل للدفع مباشرة
-      if (err?.data?.message?.includes('already') || err?.status === 400) {
-        router.push('/checkout');
-      } else {
-        toast.error('عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.');
-      }
-    }
+  const handleBuyNow = () => {
+    // Run add request in background; navigate instantly.
+    addToCart({ productId, quantity: 1, product })
+      .unwrap()
+      .catch((err: any) => {
+        if (err?.data?.message?.includes('already') || err?.status === 400) return;
+        toast.error('عذراً، حدث خطأ أثناء تجهيز السلة.');
+      });
+    router.push('/checkout');
   };
 
   if (isLoading) {

@@ -4,23 +4,34 @@ import React from 'react';
 import { ShoppingCart, Star, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useAddToCartMutation } from '@/store/api/cartApiSlice';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/store';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import * as analytics from '@/lib/analytics';
 import Image from 'next/image';
 import Link from 'next/link';
+import { productApiSlice } from '@/store/api/productApiSlice';
 
 interface ProductCardProps {
   product: any;
   priority?: boolean;
 }
 
+
 export function ProductCard({ product, priority = false }: ProductCardProps) {
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
   const [addToCart, { isLoading }] = useAddToCartMutation();
+
+  React.useEffect(() => {
+    if (!product?._id) return;
+    router.prefetch(`/product/${product._id}`);
+    dispatch(
+      productApiSlice.util.prefetch('getProductById', product._id, { force: false })
+    );
+  }, [dispatch, product?._id, router]);
 
   const handleCardClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -135,7 +146,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
             className="rounded-xl px-4 py-2 shadow-lg shadow-store/10 text-xs font-bold gap-2"
             onClick={handleCardClick}
           >
-            ادخل للرابط
+            انقر للتفاصيل
             <Eye size={16} />
           </Button>
         </div>

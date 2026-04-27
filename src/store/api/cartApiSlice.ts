@@ -12,14 +12,17 @@ export const cartApiSlice = apiSlice.injectEndpoints({
         method: 'POST',
         body: { productId: data.productId, quantity: data.quantity },
       }),
-      async onQueryStarted({ product, quantity }, { dispatch, queryFulfilled }) {
+      async onQueryStarted({ productId, product, quantity }, { dispatch, queryFulfilled }) {
         const patchResult = dispatch(
           cartApiSlice.util.updateQueryData('getCart', undefined, (draft) => {
             if (!draft.data) draft.data = { items: [] };
-            const existingItem = draft.data.items?.find((item: any) => item.product?._id === product._id);
+            const targetProductId = product?._id || productId;
+            if (!targetProductId) return;
+            const existingItem = draft.data.items?.find((item: any) => item.product?._id === targetProductId);
             if (existingItem) {
               existingItem.quantity += quantity;
             } else {
+              if (!product) return;
               if (!draft.data.items) draft.data.items = [];
               draft.data.items.push({
                 _id: 'temp-id-' + Date.now(),
