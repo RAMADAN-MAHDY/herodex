@@ -15,15 +15,28 @@ import Link from 'next/link';
 export default function ProductPage() {
   const params = useParams();
   const router = useRouter();
-  const productId = params.id as string;
+  const productId = typeof params.id === 'string' ? params.id : '';
 
-  const { data: singleProductRes, isLoading: isLoadingSingle, isFetching: isFetchingSingle } = useGetProductByIdQuery(productId, {
+  React.useLayoutEffect(() => {
+    if (!productId) return;
+    window.scrollTo(0, 0);
+  }, [productId]);
+
+  const {
+    data: singleProductRes,
+    isLoading: isLoadingSingle,
+    isFetching: isFetchingSingle,
+    isUninitialized,
+  } = useGetProductByIdQuery(productId, {
     skip: !productId,
     refetchOnFocus: false,
     refetchOnReconnect: true,
   });
   const product = singleProductRes?.data || (singleProductRes?._id ? singleProductRes : null);
-  const isLoading = (!product && isLoadingSingle) || (!product && isFetchingSingle);
+  // Avoid flashing "not found" before the query runs (skip / uninitialized) or while fetching.
+  const isLoading =
+    !productId ||
+    (!product && (isUninitialized || isLoadingSingle || isFetchingSingle));
 
   const [addToCart, { isLoading: isAddingToCart }] = useAddToCartMutation();
 
