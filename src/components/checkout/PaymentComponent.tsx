@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { useCheckoutMutation } from '@/store/api/orderApiSlice';
 import { useGetCartQuery } from '@/store/api/cartApiSlice';
+import { useGetPublicShippingRatesQuery } from '@/store/api/shippingRatesApiSlice';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { CreditCard, Wallet, MapPin, Phone, User, CheckCircle2, AlertCircle, ArrowRight, Loader2 } from 'lucide-react';
@@ -15,32 +16,45 @@ import * as analytics from '@/lib/analytics';
 
 interface ShippingAddress {
   address: string;
+  detailedAddress?: string;
   city: string;
+  governorateId: string;
   postalCode: string;
   country: string;
   phone: string;
+  email?: string;
 }
 
 export function PaymentComponent() {
   const { user } = useSelector((state: RootState) => state.auth);
   const { data: cartData, isLoading: cartLoading } = useGetCartQuery(undefined);
   const [checkout, { isLoading: isProcessing }] = useCheckoutMutation();
+  const { data: shippingRatesResponse } = useGetPublicShippingRatesQuery();
 
   const [guestName, setGuestName] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'wallet' | 'COD'>('card');
   const [walletNumber, setWalletNumber] = useState('');
   const [shippingAddress, setShippingAddress] = useState<ShippingAddress>({
     address: '',
+    detailedAddress: '',
     city: 'القاهرة',
+    governorateId: '',
     postalCode: '12345',
     country: 'Egypt',
     phone: '',
+    email: '',
   });
 
   const cart = cartData?.data || { items: [] };
   const subtotal = cart.items.reduce((acc: number, item: any) => acc + (item.product?.price * item.quantity), 0);
   const shipping = 0;
   const total = subtotal;
+
+  const shippingRates = shippingRatesResponse?.data || [];
+  const selectedShippingRate = useMemo(() => {
+    if (!shippingAddress.governorateId) return null;
+    return shippingRates.find((r: any) => r?._id === shippingAddress.governorateId) || null;
+  }, [shippingAddress.governorateId, shippingRates]);
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +66,11 @@ export function PaymentComponent() {
 
     if (!shippingAddress.phone || shippingAddress.phone.length < 11) {
       toast.error('يرجى إدخال رقم هاتف صحيح');
+      return;
+    }
+
+    if (!shippingAddress.governorateId) {
+      toast.error('يرجى اختيار المحافظة');
       return;
     }
 
@@ -155,12 +174,53 @@ export function PaymentComponent() {
               onChange={(e) => setShippingAddress({...shippingAddress, address: e.target.value})}
               className="md:col-span-2"
             />
+            <Input
+              label="عنوان تفصيلي (اختياري)"
+              placeholder="مثال: شقة 5، الدور الثالث"
+              value={shippingAddress.detailedAddress || ''}
+              onChange={(e) => setShippingAddress({ ...shippingAddress, detailedAddress: e.target.value })}
+              className="md:col-span-2"
+            />
             <Input 
               label="المدينة"
               required
               value={shippingAddress.city}
               onChange={(e) => setShippingAddress({...shippingAddress, city: e.target.value})}
             />
+            <div className="w-full space-y-2">
+              <label className="text-sm font-black text-slate-700 block mr-1 tracking-tight">
+                المحافظة
+              </label>
+              <div className="flex items-center gap-3">
+                <select
+                  required
+                  value={shippingAddress.governorateId}
+                  onChange={(e) =>
+                    setShippingAddress({ ...shippingAddress, governorateId: e.target.value })
+                  }
+                  className={cn(
+                    'flex h-14 w-full rounded-2xl border-none bg-slate-50 px-5 py-4 text-base font-bold text-slate-900 ring-offset-white placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/20 focus-visible:bg-white disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-300'
+                  )}
+                >
+                  <option value="" disabled>
+                    اختر المحافظة
+                  </option>
+                  {shippingRates.map((rate: any) => (
+                    <option key={rate._id} value={rate._id}>
+                      {rate.governorate}
+                    </option>
+                  ))}
+                </select>
+                {selectedShippingRate && (
+                  <div className="shrink-0 text-xs font-black text-slate-700 bg-slate-50 rounded-2xl px-4 py-3 border border-slate-100">
+                    <div>{selectedShippingRate.cost} ج.م</div>
+                    <div className="text-[10px] font-bold text-slate-500 mt-1">
+                      {selectedShippingRate.time}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
             <Input 
               label="رقم الهاتف"
               placeholder="01XXXXXXXXX"
@@ -168,6 +228,14 @@ export function PaymentComponent() {
               type="tel"
               value={shippingAddress.phone}
               onChange={(e) => setShippingAddress({...shippingAddress, phone: e.target.value})}
+            />
+            <Input
+              label="البريد الإلكتروني (اختياري)"
+              placeholder="user@example.com"
+              type="email"
+              value={shippingAddress.email || ''}
+              onChange={(e) => setShippingAddress({ ...shippingAddress, email: e.target.value })}
+              className="md:col-span-2"
             />
           </form>
         </section>

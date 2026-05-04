@@ -11,6 +11,12 @@
 
 import { trackViewContent as fbViewContent, trackAddToCart as fbAddToCart, trackInitiateCheckout as fbInitiateCheckout, trackPurchase as fbPurchase, trackLead as fbLead, storeCheckoutData as fbStoreCheckoutData, getCheckoutData as fbGetCheckoutData } from '@/lib/meta-pixel';
 import { trackGaViewItem, trackGaAddToCart, trackGaBeginCheckout, trackGaPurchase } from '@/lib/google-analytics';
+import {
+  trackViewContent as ttqViewContent,
+  trackAddToCart as ttqAddToCart,
+  trackInitiateCheckout as ttqInitiateCheckout,
+  trackCompletePayment as ttqCompletePayment,
+} from '@/lib/tiktok-pixel';
 
 // ─── Shared Types ────────────────────────────────────────────────────
 
@@ -43,6 +49,7 @@ export interface PurchaseParams {
 export function trackViewContent(product: ProductParams): void {
   fbViewContent(product);
   trackGaViewItem(product);
+  ttqViewContent(product);
 }
 
 /**
@@ -52,6 +59,7 @@ export function trackViewContent(product: ProductParams): void {
 export function trackAddToCart(product: ProductParams): void {
   fbAddToCart(product);
   trackGaAddToCart(product);
+  ttqAddToCart(product);
 }
 
 /**
@@ -61,6 +69,7 @@ export function trackAddToCart(product: ProductParams): void {
 export function trackInitiateCheckout(params: CheckoutParams): void {
   fbInitiateCheckout(params);
   trackGaBeginCheckout(params);
+  ttqInitiateCheckout(params);
 }
 
 /**
@@ -70,6 +79,7 @@ export function trackInitiateCheckout(params: CheckoutParams): void {
 export function trackPurchase(params: PurchaseParams): void {
   fbPurchase(params);
   trackGaPurchase(params);
+  ttqCompletePayment(params);
 }
 
 /**
