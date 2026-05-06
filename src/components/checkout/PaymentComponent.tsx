@@ -47,14 +47,19 @@ export function PaymentComponent() {
 
   const cart = cartData?.data || { items: [] };
   const subtotal = cart.items.reduce((acc: number, item: any) => acc + (item.product?.price * item.quantity), 0);
-  const shipping = 0;
-  const total = subtotal;
 
   const shippingRates = shippingRatesResponse?.data || [];
   const selectedShippingRate = useMemo(() => {
     if (!shippingAddress.governorateId) return null;
     return shippingRates.find((r: any) => r?._id === shippingAddress.governorateId) || null;
   }, [shippingAddress.governorateId, shippingRates]);
+
+  const shipping = useMemo(() => {
+    const cost = Number((selectedShippingRate as any)?.cost);
+    return Number.isFinite(cost) ? cost : 0;
+  }, [selectedShippingRate]);
+
+  const total = subtotal + shipping;
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -213,7 +218,7 @@ export function PaymentComponent() {
                 </select>
                 {selectedShippingRate && (
                   <div className="shrink-0 text-xs font-black text-slate-700 bg-slate-50 rounded-2xl px-4 py-3 border border-slate-100">
-                    <div>{selectedShippingRate.cost} ج.م</div>
+                    <div>{shipping === 0 ? 'مجاني' : `${shipping} ج.م`}</div>
                     <div className="text-[10px] font-bold text-slate-500 mt-1">
                       {selectedShippingRate.time}
                     </div>
@@ -406,6 +411,10 @@ export function PaymentComponent() {
             <div className="flex justify-between text-white/70 font-bold">
               <span>المجموع الفرعي</span>
               <span>{subtotal.toFixed(2)} ج.م</span>
+            </div>
+            <div className="flex justify-between text-white/70 font-bold">
+              <span>الشحن</span>
+              <span>{shipping === 0 ? 'مجاني' : `${shipping.toFixed(2)} ج.م`}</span>
             </div>
             <div className="pt-4 border-t border-white/10 flex justify-between text-2xl font-black">
               <span>الإجمالي</span>
