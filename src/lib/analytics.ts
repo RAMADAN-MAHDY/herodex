@@ -16,6 +16,7 @@ import {
   trackAddToCart as ttqAddToCart,
   trackInitiateCheckout as ttqInitiateCheckout,
   trackCompletePayment as ttqCompletePayment,
+  identifyUser as ttqIdentifyUser,
 } from '@/lib/tiktok-pixel';
 
 // ─── Shared Types ────────────────────────────────────────────────────
@@ -88,6 +89,14 @@ export function trackPurchase(params: PurchaseParams): void {
  */
 export function trackLead(): void {
   fbLead();
+}
+
+/**
+ * TikTok Advanced Matching (email/phone).
+ * Used to improve match quality and remove diagnostics warning.
+ */
+export async function identifyUser(params: { email?: string; phone?: string }): Promise<void> {
+  await ttqIdentifyUser(params);
 }
 
 // ─── Re-export session helpers (used by PaymentComponent + success page) ─

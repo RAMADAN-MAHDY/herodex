@@ -5,6 +5,7 @@ import { Cairo, Tajawal } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/providers";
 import {WhatsAppFloat} from "@/components/home/WhatsAppFloat";
+import { PixelsPageView } from "@/components/analytics/PixelsPageView";
 
 const cairo = Cairo({
   variable: "--font-cairo",
@@ -136,6 +137,7 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
           <Providers>{children}
             <WhatsAppFloat/>
           </Providers>
+          <PixelsPageView />
         </Suspense>
       </body>
     </html>

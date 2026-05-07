@@ -85,6 +85,12 @@ export function PaymentComponent() {
     }
 
     try {
+      // TikTok Advanced Matching (best-effort)
+      void analytics.identifyUser({
+        email: (shippingAddress.email || (user as any)?.email || '').toString(),
+        phone: (shippingAddress.phone || '').toString(),
+      });
+
       const payload: any = {
         paymentMethod,
         shippingAddress,
