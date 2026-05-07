@@ -36,6 +36,8 @@ interface TikTokPurchaseParams {
   value: number;
   orderId: string;
   numItems?: number;
+  email?: string;
+  phone?: string;
 }
 
 const CURRENCY: Currency = 'EGP';
@@ -161,10 +163,15 @@ export function trackInitiateCheckout(params: TikTokCheckoutParams): void {
 }
 
 /** TikTok standard event for completed purchase */
-export function trackCompletePayment(params: TikTokPurchaseParams): void {
+export async function trackCompletePayment(params: TikTokPurchaseParams): Promise<void> {
   if (!canTrack()) return;
   const dedupeKey = `ttq_CompletePayment_${params.orderId}`;
   if (isDuplicate(dedupeKey)) return;
+
+  // Identify user before tracking payment for Advanced Matching
+  if (params.email || params.phone) {
+    await identifyUser({ email: params.email, phone: params.phone });
+  }
 
   window.ttq!.track('CompletePayment', {
     contents: contentsFromIds(params.contentIds, 1),
