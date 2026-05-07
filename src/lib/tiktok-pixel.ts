@@ -23,6 +23,7 @@ interface TikTokProductParams {
   id: string;
   name: string;
   price: number;
+  category?: string;
 }
 
 interface TikTokCheckoutParams {
@@ -125,6 +126,7 @@ export function trackViewContent(product: TikTokProductParams): void {
         content_id: product.id,
         content_type: 'product',
         content_name: product.name,
+        content_category: product.category,
         price: product.price,
         quantity: 1,
       },

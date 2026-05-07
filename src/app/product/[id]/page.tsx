@@ -38,12 +38,16 @@ export default function ProductPage() {
   // Track product view once data is available
   React.useEffect(() => {
     if (product) {
-      analytics.trackViewContent({
-        id: product._id,
-        name: product.name,
-        price: product.price,
-        category: product.category?.name,
-      });
+      // Small timeout to ensure tracking scripts are initialized
+      const timer = setTimeout(() => {
+        analytics.trackViewContent({
+          id: product._id,
+          name: product.name,
+          price: product.price,
+          category: product.category?.name,
+        });
+      }, 500);
+      return () => clearTimeout(timer);
     }
   }, [product]);
   // Avoid flashing "not found" before the query runs (skip / uninitialized) or while fetching.
