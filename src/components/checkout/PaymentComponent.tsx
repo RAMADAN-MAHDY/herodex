@@ -64,10 +64,9 @@ export function PaymentComponent() {
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 1. فحص الاسم (للزائر أو العضو)
-    const fullName = user ? (user as any).name : guestName;
-    if (!fullName || fullName.trim().split(/\s+/).length < 2) {
-      toast.error('يرجى إدخال اسمك الثنائي على الأقل (الاسم الأول والأخير)');
+    // 2. فحص العنوان بالتفصيل
+    if (!shippingAddress.address || shippingAddress.address.trim().split(/\s+/).length < 2) {
+      toast.error('يرجى كتابة العنوان بالتفصيل (اسم الشارع، رقم المنزل، أو علامة مميزة)');
       return;
     }
 
@@ -141,9 +140,7 @@ export function PaymentComponent() {
       let errorMessage = 'عذراً، حدث خطأ ما. يرجى المحاولة مرة أخرى.';
       
       const serverMsg = err.data?.message || '';
-      if (serverMsg.includes('guestName') || serverMsg.includes('name')) {
-        errorMessage = 'يرجى إدخال اسمك بالكامل (الاسم الأول والأخير)';
-      } else if (serverMsg.includes('phone')) {
+      if (serverMsg.includes('phone')) {
         errorMessage = 'يرجى التأكد من كتابة رقم الهاتف بشكل صحيح';
       } else if (serverMsg.includes('governorate')) {
         errorMessage = 'يرجى اختيار المحافظة بشكل صحيح';
