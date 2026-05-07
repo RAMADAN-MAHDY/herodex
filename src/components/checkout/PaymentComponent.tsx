@@ -32,7 +32,7 @@ export function PaymentComponent() {
   const { data: shippingRatesResponse } = useGetPublicShippingRatesQuery();
 
   const [guestName, setGuestName] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'wallet' | 'COD'>('card');
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'wallet' | 'COD' | ''>('');
   const [walletNumber, setWalletNumber] = useState('');
   const [shippingAddress, setShippingAddress] = useState<ShippingAddress>({
     address: '',
@@ -64,23 +64,34 @@ export function PaymentComponent() {
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!user && !guestName) {
-      toast.error('يرجى إدخال اسمك بالكامل');
-      return;
+    if (!user) {
+      if (!guestName.trim()) {
+        toast.error('يرجى إدخال اسمك بالكامل');
+        return;
+      }
+      if (guestName.trim().split(/\s+/).length < 2) {
+        toast.error('يرجى إدخال اسمك الثنائي على الأقل (الاسم الأول والأخير)');
+        return;
+      }
     }
 
-    if (!shippingAddress.phone || shippingAddress.phone.length < 11) {
-      toast.error('يرجى إدخال رقم هاتف صحيح');
+    if (!shippingAddress.phone || !/^(01)[0-25]\d{8}$/.test(shippingAddress.phone)) {
+      toast.error('يرجى إدخال رقم هاتف محمول صحيح مكون من 11 رقم (مثال: 010xxxxxxxx)');
       return;
     }
 
     if (!shippingAddress.governorateId) {
-      toast.error('يرجى اختيار المحافظة');
+      toast.error('يرجى اختيار المحافظة لتحديد تكلفة الشحن');
       return;
     }
 
-    if (paymentMethod === 'wallet' && (!walletNumber || walletNumber.length < 11)) {
-      toast.error('يرجى إدخال رقم المحفظة الإلكترونية');
+    if (!paymentMethod) {
+      toast.error('يرجى اختيار وسيلة الدفع المناسبة لك');
+      return;
+    }
+
+    if (paymentMethod === 'wallet' && (!walletNumber || !/^(01)[0-25]\d{8}$/.test(walletNumber))) {
+      toast.error('يرجى إدخال رقم المحفظة الإلكترونية الصحيح (11 رقم)');
       return;
     }
 
