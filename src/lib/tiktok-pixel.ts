@@ -83,11 +83,12 @@ function canIdentify(): boolean {
   );
 }
 
-function contentsFromIds(ids: string[], quantity = 1) {
+function contentsFromIds(ids: string[], price?: number, quantity = 1) {
   return ids.map((content_id) => ({
     content_id,
     content_type: 'product',
     quantity,
+    price: price, // Adding price to individual items if available
   }));
 }
 
@@ -124,6 +125,8 @@ export function trackViewContent(product: TikTokProductParams): void {
         content_id: product.id,
         content_type: 'product',
         content_name: product.name,
+        price: product.price,
+        quantity: 1,
       },
     ],
     value: product.price,
@@ -133,6 +136,7 @@ export function trackViewContent(product: TikTokProductParams): void {
 
 export function trackAddToCart(product: TikTokProductParams): void {
   if (!canTrack()) return;
+  // Allow re-adding same product multiple times within a session
   const dedupeKey = `ttq_AddToCart_${product.id}`;
   if (isDuplicate(dedupeKey)) return;
   setTimeout(() => firedEvents.delete(dedupeKey), 2000);
@@ -143,6 +147,8 @@ export function trackAddToCart(product: TikTokProductParams): void {
         content_id: product.id,
         content_type: 'product',
         content_name: product.name,
+        price: product.price,
+        quantity: 1,
       },
     ],
     value: product.price,
@@ -156,7 +162,7 @@ export function trackInitiateCheckout(params: TikTokCheckoutParams): void {
   if (isDuplicate(dedupeKey)) return;
 
   window.ttq!.track('InitiateCheckout', {
-    contents: contentsFromIds(params.contentIds),
+    contents: contentsFromIds(params.contentIds, params.value / (params.numItems || 1)),
     value: params.value,
     currency: CURRENCY,
   });
@@ -174,7 +180,7 @@ export async function trackCompletePayment(params: TikTokPurchaseParams): Promis
   }
 
   window.ttq!.track('CompletePayment', {
-    contents: contentsFromIds(params.contentIds, 1),
+    contents: contentsFromIds(params.contentIds, params.value / (params.numItems || 1), 1),
     value: params.value,
     currency: CURRENCY,
   });

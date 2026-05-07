@@ -82,6 +82,14 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
     // تشغيل الإضافة في الخلفية
     addToCart({ productId: product._id, quantity: 1, product: product });
     
+    // Track add to cart for funnel consistency
+    analytics.trackAddToCart({
+      id: product._id,
+      name: product.name,
+      price: product.price,
+      category: product.category?.name,
+    });
+
     // التحويل اللحظي بما أن السلة ستتحدث تلقائياً بفضل الـ Optimistic updates
     router.push('/checkout');
   };

@@ -11,6 +11,7 @@ import { useAddToCartMutation } from '@/store/api/cartApiSlice';
 import { toast } from 'react-toastify';
 import Image from 'next/image';
 import Link from 'next/link';
+import * as analytics from '@/lib/analytics';
 
 export default function ProductPage() {
   const params = useParams();
@@ -33,6 +34,18 @@ export default function ProductPage() {
     refetchOnReconnect: true,
   });
   const product = singleProductRes?.data || (singleProductRes?._id ? singleProductRes : null);
+
+  // Track product view once data is available
+  React.useEffect(() => {
+    if (product) {
+      analytics.trackViewContent({
+        id: product._id,
+        name: product.name,
+        price: product.price,
+        category: product.category?.name,
+      });
+    }
+  }, [product]);
   // Avoid flashing "not found" before the query runs (skip / uninitialized) or while fetching.
   const isLoading =
     !productId ||
@@ -52,6 +65,16 @@ export default function ProductPage() {
         toast.error('عذراً، حدث خطأ أثناء الإضافة. يرجى المحاولة مرة أخرى.');
       });
     toast.success(`تم إضافة ${product?.name} إلى السلة بنجاح ✨`);
+    
+    // Tracking
+    if (product) {
+      analytics.trackAddToCart({
+        id: product._id,
+        name: product.name,
+        price: product.price,
+        category: product.category?.name,
+      });
+    }
   };
 
   const handleBuyNow = () => {
@@ -62,6 +85,14 @@ export default function ProductPage() {
         if (err?.data?.message?.includes('already') || err?.status === 400) return;
         toast.error('عذراً، حدث خطأ أثناء تجهيز السلة.');
       });
+    if (product) {
+      analytics.trackAddToCart({
+        id: product._id,
+        name: product.name,
+        price: product.price,
+        category: product.category?.name,
+      });
+    }
     router.push('/checkout');
   };
 
