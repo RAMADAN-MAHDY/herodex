@@ -64,15 +64,11 @@ export function PaymentComponent() {
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!user) {
-      if (!guestName.trim()) {
-        toast.error('يرجى إدخال اسمك بالكامل');
-        return;
-      }
-      if (guestName.trim().split(/\s+/).length < 2) {
-        toast.error('يرجى إدخال اسمك الثنائي على الأقل (الاسم الأول والأخير)');
-        return;
-      }
+    // 1. فحص الاسم (للزائر أو العضو)
+    const fullName = user ? (user as any).name : guestName;
+    if (!fullName || fullName.trim().split(/\s+/).length < 2) {
+      toast.error('يرجى إدخال اسمك الثنائي على الأقل (الاسم الأول والأخير)');
+      return;
     }
 
     if (!shippingAddress.phone || !/^(01)[0-25]\d{8}$/.test(shippingAddress.phone)) {
@@ -140,7 +136,24 @@ export function PaymentComponent() {
       }
     } catch (err: any) {
       console.error('Checkout error:', err);
-      toast.error(err.data?.message || 'عذراً، حدث خطأ ما. يرجى المحاولة مرة أخرى.');
+      
+      // تحويل أخطاء السيرفر لرسائل عربية مفهومة
+      let errorMessage = 'عذراً، حدث خطأ ما. يرجى المحاولة مرة أخرى.';
+      
+      const serverMsg = err.data?.message || '';
+      if (serverMsg.includes('guestName') || serverMsg.includes('name')) {
+        errorMessage = 'يرجى إدخال اسمك بالكامل (الاسم الأول والأخير)';
+      } else if (serverMsg.includes('phone')) {
+        errorMessage = 'يرجى التأكد من كتابة رقم الهاتف بشكل صحيح';
+      } else if (serverMsg.includes('governorate')) {
+        errorMessage = 'يرجى اختيار المحافظة بشكل صحيح';
+      } else if (serverMsg.includes('paymentMethod')) {
+        errorMessage = 'يرجى اختيار وسيلة دفع صالحة';
+      } else if (err.data?.message) {
+        errorMessage = err.data.message;
+      }
+
+      toast.error(errorMessage);
     }
   };
 
