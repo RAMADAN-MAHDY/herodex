@@ -109,6 +109,8 @@ export function PaymentComponent() {
         contentIds: cart.items.map((item: any) => item.product?._id).filter(Boolean),
         value: total,
         numItems: cart.items.length,
+        email: (shippingAddress.email || (user as any)?.email || '').toString(),
+        phone: (shippingAddress.phone || '').toString(),
       });
 
       const result: any = await checkout(payload).unwrap();

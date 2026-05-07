@@ -28,6 +28,8 @@ interface PixelCheckoutParams {
   contentIds: string[];
   value: number;
   numItems: number;
+  email?: string;
+  phone?: string;
 }
 
 interface PixelPurchaseParams {
@@ -35,6 +37,8 @@ interface PixelPurchaseParams {
   value: number;
   orderId: string;
   numItems?: number;
+  email?: string;
+  phone?: string;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────
@@ -144,11 +148,27 @@ export function trackInitiateCheckout(params: PixelCheckoutParams): void {
 /**
  * Track a completed purchase.
  * Deduplicated per order ID (never fires twice for the same order).
+ * Includes user data for Meta Advanced Matching.
  */
 export function trackPurchase(params: PixelPurchaseParams): void {
   if (!canTrack()) return;
   const dedupeKey = `Purchase_${params.orderId}`;
   if (isDuplicate(dedupeKey)) return;
+
+  // If we have user data, we can re-init or use the data in the track call.
+  // Facebook recommends providing user data in the init call for best results,
+  // but we can also provide it in the 'track' call if needed.
+  // Note: Meta Pixel automatically hashes data if passed as clear text.
+  
+  const userData = params.email || params.phone ? {
+    em: params.email?.toLowerCase().trim(),
+    ph: params.phone?.replace(/\D/g, ''),
+  } : undefined;
+
+  if (userData) {
+    // Re-initialize with user data to enable Advanced Matching
+    window.fbq('init', PIXEL_ID, userData);
+  }
 
   window.fbq('track', 'Purchase', {
     content_ids: params.contentIds,
@@ -168,6 +188,21 @@ export function trackLead(): void {
   if (isDuplicate(dedupeKey)) return;
 
   window.fbq('track', 'Lead');
+}
+
+/**
+ * Identify user for Advanced Matching.
+ */
+export function identifyUser(params: { email?: string; phone?: string }): void {
+  if (!canTrack()) return;
+  
+  const userData: any = {};
+  if (params.email) userData.em = params.email.toLowerCase().trim();
+  if (params.phone) userData.ph = params.phone.replace(/\D/g, '');
+
+  if (Object.keys(userData).length > 0) {
+    window.fbq('init', PIXEL_ID, userData);
+  }
 }
 
 /**

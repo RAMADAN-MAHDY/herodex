@@ -9,7 +9,7 @@
  *   analytics.trackViewContent(product);
  */
 
-import { trackViewContent as fbViewContent, trackAddToCart as fbAddToCart, trackInitiateCheckout as fbInitiateCheckout, trackPurchase as fbPurchase, trackLead as fbLead, storeCheckoutData as fbStoreCheckoutData, getCheckoutData as fbGetCheckoutData } from '@/lib/meta-pixel';
+import { trackViewContent as fbViewContent, trackAddToCart as fbAddToCart, trackInitiateCheckout as fbInitiateCheckout, trackPurchase as fbPurchase, trackLead as fbLead, storeCheckoutData as fbStoreCheckoutData, getCheckoutData as fbGetCheckoutData, identifyUser as fbIdentifyUser } from '@/lib/meta-pixel';
 import { trackGaViewItem, trackGaAddToCart, trackGaBeginCheckout, trackGaPurchase } from '@/lib/google-analytics';
 import {
   trackViewContent as ttqViewContent,
@@ -32,6 +32,8 @@ export interface CheckoutParams {
   contentIds: string[];
   value: number;
   numItems: number;
+  email?: string;
+  phone?: string;
 }
 
 export interface PurchaseParams {
@@ -39,6 +41,8 @@ export interface PurchaseParams {
   value: number;
   orderId: string;
   numItems?: number;
+  email?: string;
+  phone?: string;
 }
 
 // ─── Unified Event Functions ─────────────────────────────────────────
@@ -96,6 +100,7 @@ export function trackLead(): void {
  * Used to improve match quality and remove diagnostics warning.
  */
 export async function identifyUser(params: { email?: string; phone?: string }): Promise<void> {
+  fbIdentifyUser(params);
   await ttqIdentifyUser(params);
 }
 
