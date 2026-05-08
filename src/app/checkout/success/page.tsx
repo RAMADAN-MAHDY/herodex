@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -20,6 +20,8 @@ function SuccessContent() {
   const transactionId = searchParams.get('transaction_id');
   const orderId = searchParams.get('order_id');
   const hasFiredPurchase = useRef(false);
+  const checkoutDataRef = useRef<any>(null);
+  const [totalValue, setTotalValue] = useState<number | null>(null);
 
   useEffect(() => {
     // تفريغ السلة في الواجهة الأمامية
@@ -30,15 +32,20 @@ function SuccessContent() {
     if (!ordIdentifier || hasFiredPurchase.current) return;
     hasFiredPurchase.current = true;
 
-    const checkoutData = analytics.getCheckoutData();
-    analytics.trackPurchase({
-      contentIds: checkoutData?.contentIds || [],
-      value: checkoutData?.value || 0,
-      orderId: ordIdentifier,
-      numItems: checkoutData?.numItems,
-      email: checkoutData?.email,
-      phone: checkoutData?.phone,
-    });
+    const data = analytics.getCheckoutData();
+    if (data) {
+      checkoutDataRef.current = data;
+      setTotalValue(data.value);
+      
+      analytics.trackPurchase({
+        contentIds: data.contentIds || [],
+        value: data.value || 0,
+        orderId: ordIdentifier,
+        numItems: data.numItems,
+        email: data.email,
+        phone: data.phone,
+      });
+    }
   }, [dispatch, transactionId, orderId]);
 
   return (
@@ -72,13 +79,19 @@ function SuccessContent() {
             شكراً لثقتك بنا. تم استلام طلبك وجاري العمل على تجهيزه وشحنه لك في أقرب وقت.
           </p>
 
-          <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100 mb-8 text-right">
+            <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100 mb-8 text-right">
             <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-100">
               <span className="text-sm text-gray-400 font-bold">
                 {transactionId ? 'رقم العملية (Transaction ID)' : 'رقم الطلب (Order ID)'}
               </span>
               <span className="text-sm font-black text-store">{transactionId || orderId || '---'}</span>
             </div>
+            {totalValue && (
+              <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-100">
+                <span className="text-sm text-gray-400 font-bold">إجمالي المبلغ</span>
+                <span className="text-sm font-black text-store-gold">{totalValue.toFixed(2)} ج.م</span>
+              </div>
+            )}
             <div className="flex gap-3 text-sm text-gray-600 font-bold items-center">
               <Package size={18} className="text-store-gold" />
               <span>يمكنك عرض تفاصيل طلبك في صفحة "طلباتي".</span>

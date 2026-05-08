@@ -116,7 +116,7 @@ export async function identifyUser(params: { email?: string; phone?: string }): 
 }
 
 export function trackViewContent(product: TikTokProductParams): void {
-  if (!canTrack()) return;
+  if (!canTrack() || !product.id || !product.price) return;
 
   window.ttq!.track('ViewContent', {
     contents: [
@@ -135,7 +135,7 @@ export function trackViewContent(product: TikTokProductParams): void {
 }
 
 export function trackAddToCart(product: TikTokProductParams): void {
-  if (!canTrack()) return;
+  if (!canTrack() || !product.id || !product.price) return;
   // Allow re-adding same product multiple times within a session
   const dedupeKey = `ttq_AddToCart_${product.id}`;
   if (isDuplicate(dedupeKey)) return;
@@ -157,7 +157,7 @@ export function trackAddToCart(product: TikTokProductParams): void {
 }
 
 export function trackInitiateCheckout(params: TikTokCheckoutParams): void {
-  if (!canTrack()) return;
+  if (!canTrack() || !params.contentIds?.length || !params.value) return;
   const dedupeKey = 'ttq_InitiateCheckout';
   if (isDuplicate(dedupeKey)) return;
 
@@ -170,7 +170,7 @@ export function trackInitiateCheckout(params: TikTokCheckoutParams): void {
 
 /** TikTok standard event for completed purchase */
 export async function trackCompletePayment(params: TikTokPurchaseParams): Promise<void> {
-  if (!canTrack()) return;
+  if (!canTrack() || !params.orderId || !params.value || !params.contentIds?.length) return;
   const dedupeKey = `ttq_CompletePayment_${params.orderId}`;
   if (isDuplicate(dedupeKey)) return;
 
@@ -180,7 +180,7 @@ export async function trackCompletePayment(params: TikTokPurchaseParams): Promis
   }
 
   window.ttq!.track('CompletePayment', {
-    contents: contentsFromIds(params.contentIds, params.value / (params.numItems || 1), 1),
+    contents: contentsFromIds(params.contentIds, params.value / (params.numItems || 1)),
     value: params.value,
     currency: CURRENCY,
   });
