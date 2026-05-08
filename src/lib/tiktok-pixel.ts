@@ -117,6 +117,11 @@ export async function identifyUser(params: { email?: string; phone?: string }): 
 
 export function trackViewContent(product: TikTokProductParams): void {
   if (!canTrack() || !product.id || !product.price) return;
+  
+  const dedupeKey = `ttq_ViewContent_${product.id}`;
+  if (isDuplicate(dedupeKey)) return;
+  // Allow re-tracking the same product if they navigate away and come back later
+  setTimeout(() => firedEvents.delete(dedupeKey), 5000);
 
   window.ttq!.track('ViewContent', {
     contents: [
