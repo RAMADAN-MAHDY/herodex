@@ -35,15 +35,6 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
 
   const handleCardClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    
-    // Track product detail view (Meta Pixel + GA4)
-    analytics.trackViewContent({
-      id: product._id,
-      name: product.name,
-      price: product.price,
-      category: product.category?.name,
-    });
-
     router.push(`/product/${product._id}`);
   };
 
@@ -149,16 +140,16 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
             </span>
           </div>
 
-          <Button
-            size="sm"
-            className="rounded-xl px-4 py-2 shadow-lg shadow-store/10 text-xs font-bold gap-2"
+            <Button
+              size="sm"
+              className="rounded-xl px-4 py-2 shadow-lg shadow-store/10 text-xs font-bold gap-2"
             onClick={handleCardClick}
-          >
+            >
             انقر للتفاصيل
             <Eye size={16} />
-          </Button>
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
   );
 }
