@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { cn } from '@/utils/cn';
 import * as analytics from '@/lib/analytics';
+import { DISCOUNT_PERCENTAGE, getOriginalPriceBeforeDiscount } from '@/utils/discount';
 
 interface ShippingAddress {
   address: string;
@@ -47,6 +48,7 @@ export function PaymentComponent() {
 
   const cart = cartData?.data || { items: [] };
   const subtotal = cart.items.reduce((acc: number, item: any) => acc + (item.product?.price * item.quantity), 0);
+  const subtotalBeforeDiscount = cart.items.reduce((acc: number, item: any) => acc + (getOriginalPriceBeforeDiscount(item.product?.price || 0) * item.quantity), 0);
 
   const shippingRates = shippingRatesResponse?.data || [];
   const selectedShippingRate = useMemo(() => {
@@ -432,7 +434,12 @@ export function PaymentComponent() {
                   <p className="text-sm font-bold truncate">{item.product?.name}</p>
                   <div className="flex justify-between items-center mt-1">
                     <span className="text-xs text-white/60 font-medium">الكمية: {item.quantity}</span>
-                    <span className="text-sm font-black text-store-gold">{(item.product?.price * item.quantity).toFixed(2)} ج.م</span>
+                    <div className="flex flex-col items-end">
+                      <span className="text-[10px] text-white/40 font-bold line-through leading-none mb-0.5">
+                        {(getOriginalPriceBeforeDiscount(item.product?.price || 0) * item.quantity).toFixed(2)} ج.م
+                      </span>
+                      <span className="text-sm font-black text-store-gold">{(item.product?.price * item.quantity).toFixed(2)} ج.م</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -440,8 +447,16 @@ export function PaymentComponent() {
           </div>
 
           <div className="space-y-4 relative border-t border-white/10 pt-6">
+            <div className="flex justify-between text-white/40 text-sm">
+              <span>السعر قبل الخصم</span>
+              <span className="line-through">{subtotalBeforeDiscount.toFixed(2)} ج.م</span>
+            </div>
+            <div className="flex justify-between text-store-gold font-bold">
+              <span>خصم {DISCOUNT_PERCENTAGE}٪</span>
+              <span>- {(subtotalBeforeDiscount - subtotal).toFixed(2)} ج.م</span>
+            </div>
             <div className="flex justify-between text-white/70 font-bold">
-              <span>المجموع الفرعي</span>
+              <span>المجموع الفرعي بعد الخصم</span>
               <span>{subtotal.toFixed(2)} ج.م</span>
             </div>
             <div className="flex justify-between text-white/70 font-bold">
