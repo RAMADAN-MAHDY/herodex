@@ -12,6 +12,7 @@ import { toast } from 'react-toastify';
 import Image from 'next/image';
 import Link from 'next/link';
 import * as analytics from '@/lib/analytics';
+import { DISCOUNT_PERCENTAGE, getOriginalPriceBeforeDiscount } from '@/utils/discount';
 
 export default function ProductPage() {
   const params = useParams();
@@ -181,9 +182,14 @@ export default function ProductPage() {
                 <div className="pt-8 border-t border-neutral-100">
                   <div className="flex items-center justify-between mb-8">
                     <div className="flex flex-col">
-                      <span className="text-sm text-gray-400 line-through decoration-store-gold/40 font-bold mb-1">
-                        {((product.price || 0) * 1.2).toFixed(2)} ج.م
-                      </span>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm text-gray-400 line-through decoration-store-gold/40 font-bold">
+                          {getOriginalPriceBeforeDiscount(product.price || 0).toFixed(2)} ج.م
+                        </span>
+                        <span className="text-[10px] font-black text-white bg-rose-500 px-2 py-0.5 rounded-md">
+                          خصم {DISCOUNT_PERCENTAGE}٪
+                        </span>
+                      </div>
                       <div className="flex items-baseline gap-2">
                         <span className="text-5xl font-black text-store tracking-tighter">
                           {(product.price || 0).toLocaleString('en-US')}
