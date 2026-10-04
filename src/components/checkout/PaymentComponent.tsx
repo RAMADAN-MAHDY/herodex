@@ -237,9 +237,7 @@ export function PaymentComponent() {
                   onChange={(e) =>
                     setShippingAddress({ ...shippingAddress, governorateId: e.target.value })
                   }
-                  className={cn(
-                    'flex h-14 w-full rounded-2xl border-none bg-slate-50 px-5 py-4 text-base font-bold text-slate-900 ring-offset-white placeholder:text-slate-400 focus-visible:outline-none focu[...]
-                  )}
+                  className="flex h-14 w-full rounded-2xl border-none bg-slate-50 px-5 py-4 text-base font-bold text-slate-900 ring-offset-white placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-store focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   <option value="" disabled>
                     اختر المحافظة
@@ -464,7 +462,7 @@ export function PaymentComponent() {
             form="checkout-form"
             type="submit"
             disabled={isProcessing}
-            className="w-full mt-8 py-5 rounded-2xl text-lg font-black bg-store-gold hover:bg-store-gold/90 text-store-dark border-0 shadow-lg shadow-store-gold/20 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed group"
+            className="w-full mt-8 py-5 rounded-2xl text-lg font-black bg-store-gold hover:bg-store-gold/90 text-store-dark border-0 shadow-lg shadow-store-gold/20 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {isProcessing ? (
               <>
