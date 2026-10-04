@@ -9,15 +9,17 @@ import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
+import { DISCOUNT_PERCENTAGE, getOriginalPriceBeforeDiscount } from '@/utils/discount';
 
 export default function CartPage() {
   const { data: cartData, isLoading, error } = useGetCartQuery(undefined);
-  
+
   const [updateItem, { isLoading: isUpdating }] = useUpdateCartItemMutation();
   const [removeItem, { isLoading: isRemoving }] = useRemoveFromCartMutation();
 
   const cart = cartData?.data || { items: [] };
   const subtotal = cart.items.reduce((acc: number, item: any) => acc + (item.product?.price * item.quantity), 0);
+  const subtotalBeforeDiscount = cart.items.reduce((acc: number, item: any) => acc + (getOriginalPriceBeforeDiscount(item.product?.price || 0) * item.quantity), 0);
   const shipping = 0;
   const total = subtotal;
 
@@ -114,7 +116,12 @@ export default function CartPage() {
                               <Plus size={14} className="md:w-4 md:h-4" />
                             </button>
                           </div>
-                          <span className="font-extrabold text-store text-sm md:text-lg">{(item.product?.price * item.quantity).toFixed(2)} ج.م</span>
+                          <div className="flex flex-col items-end">
+                            <span className="text-[10px] text-gray-400 font-bold line-through leading-none mb-0.5">
+                              {(getOriginalPriceBeforeDiscount(item.product?.price || 0) * item.quantity).toFixed(2)} ج.م
+                            </span>
+                            <span className="font-extrabold text-store text-sm md:text-lg">{(item.product?.price * item.quantity).toFixed(2)} ج.م</span>
+                          </div>
                         </div>
                       </div>
                     </motion.div>
@@ -128,11 +135,21 @@ export default function CartPage() {
                   <h2 className="text-xl font-bold text-gray-900 mb-6">ملخص الطلب</h2>
                   
                   <div className="space-y-4 mb-8">
+                    <div className="flex justify-between text-gray-400 text-sm">
+                      <span>السعر قبل الخصم</span>
+                      <span className="line-through">{subtotalBeforeDiscount.toFixed(2)} ج.م</span>
+                    </div>
+
+                    <div className="flex justify-between text-rose-500 font-bold">
+                      <span>خصم {DISCOUNT_PERCENTAGE}٪</span>
+                      <span>- {(subtotalBeforeDiscount - subtotal).toFixed(2)} ج.م</span>
+                    </div>
+
                     <div className="flex justify-between text-gray-500">
-                      <span>المجموع الفرعي</span>
+                      <span>المجموع الفرعي بعد الخصم</span>
                       <span>{subtotal.toFixed(2)} ج.م</span>
                     </div>
-                    
+
                     <div className="border-t border-gray-50 pt-4 flex justify-between text-xl font-extrabold text-store-black">
                       <span>الإجمالي</span>
                       <span className="text-store">{total.toFixed(2)} ج.م</span>

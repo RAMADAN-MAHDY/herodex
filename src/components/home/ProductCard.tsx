@@ -12,6 +12,7 @@ import * as analytics from '@/lib/analytics';
 import Image from 'next/image';
 import Link from 'next/link';
 import { productApiSlice } from '@/store/api/productApiSlice';
+import { DISCOUNT_PERCENTAGE, getOriginalPriceBeforeDiscount } from '@/utils/discount';
 
 interface ProductCardProps {
   product: any;
@@ -21,6 +22,8 @@ interface ProductCardProps {
 
 export function ProductCard({ product, priority = false }: ProductCardProps) {
   const router = useRouter();
+  const realPrice = product.price || 0;
+  const originalPrice = getOriginalPriceBeforeDiscount(realPrice);
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
   const [addToCart, { isLoading }] = useAddToCartMutation();
@@ -133,11 +136,16 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
 
         <div className="flex items-center justify-between pt-2 border-t border-gray-50">
           <div className="flex flex-col">
-            <span className="text-xs text-gray-400 font-bold line-through ml-1 leading-none mb-1">
-              {((product.price || 0) + 100).toLocaleString('en-US')} ج.م
-            </span>
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="text-xs text-gray-400 font-bold line-through leading-none">
+                {originalPrice.toLocaleString('en-US')} ج.م
+              </span>
+              <span className="text-[9px] font-black text-white bg-rose-500 px-1.5 py-0.5 rounded-md leading-none">
+                خصم {DISCOUNT_PERCENTAGE}٪
+              </span>
+            </div>
             <span className="text-xl font-black text-store-dark tracking-tight">
-              {(product.price || 0).toLocaleString('en-US')} <span className="text-xs font-bold text-gray-500 mr-0.5">ج.م</span>
+              {realPrice.toLocaleString('en-US')} <span className="text-xs font-bold text-gray-500 mr-0.5">ج.م</span>
             </span>
           </div>
 
