@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { cn } from '@/utils/cn';
 import * as analytics from '@/lib/analytics';
+import { formatPrice, getOriginalPriceFromDbPrice } from '@/utils/pricing';
 
 interface ShippingAddress {
   address: string;
@@ -46,7 +47,11 @@ export function PaymentComponent() {
   });
 
   const cart = cartData?.data || { items: [] };
-  const subtotal = cart.items.reduce((acc: number, item: any) => acc + (item.product?.price * item.quantity), 0);
+  const subtotal = cart.items.reduce((acc: number, item: any) => acc + (Number(item.product?.price || 0) * item.quantity), 0);
+  const originalSubtotal = cart.items.reduce((acc: number, item: any) => {
+    const basePrice = Number(item.product?.price || 0);
+    return acc + (getOriginalPriceFromDbPrice(basePrice) * item.quantity);
+  }, 0);
 
   const shippingRates = shippingRatesResponse?.data || [];
   const selectedShippingRate = useMemo(() => {
@@ -233,7 +238,7 @@ export function PaymentComponent() {
                     setShippingAddress({ ...shippingAddress, governorateId: e.target.value })
                   }
                   className={cn(
-                    'flex h-14 w-full rounded-2xl border-none bg-slate-50 px-5 py-4 text-base font-bold text-slate-900 ring-offset-white placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/20 focus-visible:bg-white disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-300'
+                    'flex h-14 w-full rounded-2xl border-none bg-slate-50 px-5 py-4 text-base font-bold text-slate-900 ring-offset-white placeholder:text-slate-400 focus-visible:outline-none focu[...]
                   )}
                 >
                   <option value="" disabled>
@@ -429,7 +434,7 @@ export function PaymentComponent() {
                   <p className="text-sm font-bold truncate">{item.product?.name}</p>
                   <div className="flex justify-between items-center mt-1">
                     <span className="text-xs text-white/60 font-medium">الكمية: {item.quantity}</span>
-                    <span className="text-sm font-black text-store-gold">{(item.product?.price * item.quantity).toFixed(2)} ج.م</span>
+                    <span className="text-sm font-black text-store-gold">{(Number(item.product?.price || 0) * item.quantity).toFixed(2)} ج.م</span>
                   </div>
                 </div>
               </div>
@@ -439,7 +444,11 @@ export function PaymentComponent() {
           <div className="space-y-4 relative border-t border-white/10 pt-6">
             <div className="flex justify-between text-white/70 font-bold">
               <span>المجموع الفرعي</span>
-              <span>{subtotal.toFixed(2)} ج.م</span>
+              <span>{formatPrice(subtotal)} ج.م</span>
+            </div>
+            <div className="flex justify-between text-white/40 font-bold line-through">
+              <span>السعر قبل الخصم</span>
+              <span>{formatPrice(originalSubtotal)} ج.م</span>
             </div>
             <div className="flex justify-between text-white/70 font-bold">
               <span>الشحن</span>
