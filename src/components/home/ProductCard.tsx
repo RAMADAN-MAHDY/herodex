@@ -12,6 +12,7 @@ import * as analytics from '@/lib/analytics';
 import Image from 'next/image';
 import Link from 'next/link';
 import { productApiSlice } from '@/store/api/productApiSlice';
+import { getOriginalPriceFromDbPrice, formatPrice } from '@/utils/pricing';
 
 interface ProductCardProps {
   product: any;
@@ -85,6 +86,9 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
     router.push('/checkout');
   };
 
+  const basePrice = Number(product.price) || 0;
+  const originalPrice = getOriginalPriceFromDbPrice(basePrice);
+
   return (
     <div
       onClick={handleCardClick}
@@ -133,10 +137,10 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
         <div className="flex items-center justify-between pt-2 border-t border-gray-50">
           <div className="flex flex-col">
             <span className="text-xs text-gray-400 font-bold line-through ml-1 leading-none mb-1">
-              {((product.price || 0) + 100).toLocaleString('en-US')} ج.م
+              {formatPrice(originalPrice)} ج.م
             </span>
             <span className="text-xl font-black text-store-dark tracking-tight">
-              {(product.price || 0).toLocaleString('en-US')} <span className="text-xs font-bold text-gray-500 mr-0.5">ج.م</span>
+              {formatPrice(basePrice)} <span className="text-xs font-bold text-gray-500 mr-0.5">ج.م</span>
             </span>
           </div>
 
@@ -151,5 +155,5 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
           </div>
         </div>
       </div>
-  );
+   );
 }
