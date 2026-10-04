@@ -9,15 +9,20 @@ import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
+import { formatPrice, getOriginalPriceFromDbPrice } from '@/utils/pricing';
 
 export default function CartPage() {
   const { data: cartData, isLoading, error } = useGetCartQuery(undefined);
-  
+
   const [updateItem, { isLoading: isUpdating }] = useUpdateCartItemMutation();
   const [removeItem, { isLoading: isRemoving }] = useRemoveFromCartMutation();
 
   const cart = cartData?.data || { items: [] };
-  const subtotal = cart.items.reduce((acc: number, item: any) => acc + (item.product?.price * item.quantity), 0);
+  const subtotal = cart.items.reduce((acc: number, item: any) => acc + (Number(item.product?.price || 0) * item.quantity), 0);
+  const originalSubtotal = cart.items.reduce((acc: number, item: any) => {
+    const basePrice = Number(item.product?.price || 0);
+    return acc + (getOriginalPriceFromDbPrice(basePrice) * item.quantity);
+  }, 0);
   const shipping = 0;
   const total = subtotal;
 
@@ -67,58 +72,72 @@ export default function CartPage() {
               {/* Items List */}
               <div className="lg:col-span-2 space-y-4">
                 <AnimatePresence>
-                  {cart.items.map((item: any) => (
-                    <motion.div
-                      layout
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      key={item._id}
-                      className="bg-white p-3 md:p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 lg:gap-6"
-                    >
-                      <div className="w-20 h-20 md:w-24 md:h-24 rounded-xl overflow-hidden border border-gray-50 flex-shrink-0">
-                        <img 
-                          src={item.product?.image} 
-                          alt={item.product?.name} 
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start">
-                          <div className="min-w-0">
-                            <h3 className="font-bold text-gray-900 text-sm md:text-lg truncate md:whitespace-normal">{item.product?.name}</h3>
-                            <p className="text-gray-400 text-[10px] md:text-sm">{item.product?.category?.name || 'مستحضرات تجميل'}</p>
-                          </div>
-                          <button 
-                            onClick={() => handleRemove(item.product?._id, item.product?.name)}
-                            className="text-gray-300 hover:text-red-500 transition-colors p-1"
-                          >
-                            <Trash2 size={18} className="md:w-5 md:h-5" />
-                          </button>
-                        </div>
+                  {cart.items.map((item: any) => {
+                    const itemOriginalPrice = getOriginalPriceFromDbPrice(Number(item.product?.price || 0));
+                    const itemTotalPrice = Number(item.product?.price || 0) * item.quantity;
+                    const itemOriginalTotalPrice = itemOriginalPrice * item.quantity;
 
-                        <div className="flex justify-between items-center mt-3 md:mt-4">
-                          <div className="flex items-center bg-gray-50 rounded-lg p-0.5 md:p-1">
+                    return (
+                      <motion.div
+                        layout
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        key={item._id}
+                        className="bg-white p-3 md:p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 lg:gap-6"
+                      >
+                        <div className="w-20 h-20 md:w-24 md:h-24 rounded-xl overflow-hidden border border-gray-50 flex-shrink-0">
+                          <img 
+                            src={item.product?.image} 
+                            alt={item.product?.name} 
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-start">
+                            <div className="min-w-0">
+                              <h3 className="font-bold text-gray-900 text-sm md:text-lg truncate md:whitespace-normal">{item.product?.name}</h3>
+                              <p className="text-gray-400 text-[10px] md:text-sm">{item.product?.category?.name || 'مستحضرات تجميل'}</p>
+                            </div>
                             <button 
-                              onClick={() => handleQuantityChange(item.product?._id, item.quantity - 1)}
-                              className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center text-gray-500 hover:bg-white hover:shadow-sm rounded-md transition-all"
+                              onClick={() => handleRemove(item.product?._id, item.product?.name)}
+                              className="text-gray-300 hover:text-red-500 transition-colors p-1"
                             >
-                              <Minus size={14} className="md:w-4 md:h-4" />
-                            </button>
-                            <span className="w-7 md:w-10 text-center font-bold text-gray-700 text-sm md:text-base">{item.quantity}</span>
-                            <button 
-                              onClick={() => handleQuantityChange(item.product?._id, item.quantity + 1)}
-                              className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center text-gray-500 hover:bg-white hover:shadow-sm rounded-md transition-all"
-                            >
-                              <Plus size={14} className="md:w-4 md:h-4" />
+                              <Trash2 size={18} className="md:w-5 md:h-5" />
                             </button>
                           </div>
-                          <span className="font-extrabold text-store text-sm md:text-lg">{(item.product?.price * item.quantity).toFixed(2)} ج.م</span>
+
+                          <div className="flex justify-between items-center mt-3 md:mt-4">
+                            <div className="flex items-center bg-gray-50 rounded-lg p-0.5 md:p-1">
+                              <button 
+                                onClick={() => handleQuantityChange(item.product?._id, item.quantity - 1)}
+                                className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center text-gray-500 hover:bg-white hover:shadow-sm rounded-md transition-all"
+                              >
+                                <Minus size={14} className="md:w-4 md:h-4" />
+                              </button>
+                              <span className="w-7 md:w-10 text-center font-bold text-gray-700 text-sm md:text-base">{item.quantity}</span>
+                              <button 
+                                onClick={() => handleQuantityChange(item.product?._id, item.quantity + 1)}
+                                className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center text-gray-500 hover:bg-white hover:shadow-sm rounded-md transition-all"
+                              >
+                                <Plus size={14} className="md:w-4 md:h-4" />
+                              </button>
+                            </div>
+
+                            <div className="flex flex-col items-end">
+                              <span className="text-[11px] text-gray-400 font-bold line-through leading-none mb-1">
+                                {formatPrice(itemOriginalTotalPrice)} ج.م
+                              </span>
+                              <span className="font-extrabold text-store text-sm md:text-lg">
+                                {formatPrice(itemTotalPrice)} ج.م
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  ))}
+                      </motion.div>
+                    );
+                  })}
                 </AnimatePresence>
               </div>
 
@@ -130,12 +149,17 @@ export default function CartPage() {
                   <div className="space-y-4 mb-8">
                     <div className="flex justify-between text-gray-500">
                       <span>المجموع الفرعي</span>
-                      <span>{subtotal.toFixed(2)} ج.م</span>
+                      <span>{formatPrice(subtotal)} ج.م</span>
+                    </div>
+
+                    <div className="flex justify-between text-gray-400 font-bold line-through">
+                      <span>السعر قبل الخصم</span>
+                      <span>{formatPrice(originalSubtotal)} ج.م</span>
                     </div>
                     
                     <div className="border-t border-gray-50 pt-4 flex justify-between text-xl font-extrabold text-store-black">
                       <span>الإجمالي</span>
-                      <span className="text-store">{total.toFixed(2)} ج.م</span>
+                      <span className="text-store">{formatPrice(total)} ج.م</span>
                     </div>
                   </div>
 
