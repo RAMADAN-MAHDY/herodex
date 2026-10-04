@@ -12,6 +12,7 @@ import { toast } from 'react-toastify';
 import Image from 'next/image';
 import Link from 'next/link';
 import * as analytics from '@/lib/analytics';
+import { formatPrice, getOriginalPriceFromDbPrice } from '@/utils/pricing';
 
 export default function ProductPage() {
   const params = useParams();
@@ -34,6 +35,8 @@ export default function ProductPage() {
     refetchOnReconnect: true,
   });
   const product = singleProductRes?.data || (singleProductRes?._id ? singleProductRes : null);
+  const basePrice = Number(product?.price || 0);
+  const originalPrice = getOriginalPriceFromDbPrice(basePrice);
 
   // Track product view once data is available
   React.useEffect(() => {
@@ -69,7 +72,7 @@ export default function ProductPage() {
         toast.error('عذراً، حدث خطأ أثناء الإضافة. يرجى المحاولة مرة أخرى.');
       });
     toast.success(`تم إضافة ${product?.name} إلى السلة بنجاح ✨`);
-    
+
     // Tracking
     if (product) {
       analytics.trackAddToCart({
@@ -194,7 +197,7 @@ export default function ProductPage() {
                       <div className="w-3 h-3 bg-store rounded-full animate-pulse" />
                     </div>
                     <div>
-                      <p className="text-[11px] font-black text-store uppercase tracking-wider">تركيبة هندية متطورة</p>
+                      <p className="text-[11px] font-black text-store uppercase tracking-wider">تركيبة هندية م��طورة</p>
                       <p className="text-sm font-bold text-gray-600">غنية بالكافيين لنتائج في ٣٠ يوم</p>
                     </div>
                   </div>
@@ -204,11 +207,11 @@ export default function ProductPage() {
                   <div className="flex items-center justify-between mb-8">
                     <div className="flex flex-col">
                       <span className="text-sm text-gray-400 line-through decoration-store-gold/40 font-bold mb-1">
-                        {((product.price || 0) * 1.2).toFixed(2)} ج.م
+                        {formatPrice(originalPrice)} ج.م
                       </span>
                       <div className="flex items-baseline gap-2">
                         <span className="text-5xl font-black text-store tracking-tighter">
-                          {(product.price || 0).toLocaleString('en-US')}
+                          {formatPrice(basePrice)}
                         </span>
                         <span className="text-xl font-bold text-store">ج.م</span>
                       </div>
